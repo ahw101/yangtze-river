@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Yangtze | Premium Dark Edition</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #080a0c;
+            --card-bg: #12161b;
+            --text-main: #f0f0f0;
+            --text-dim: #a0aab4;
+            --accent: #00d2b4; 
+            --nav-bg: rgba(8, 10, 12, 0.9);
+        }
+
+        body {
+            margin: 0;
+            /* Applying Montserrat for the base font */
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.8;
+            letter-spacing: 0.02rem;
+        }
+
+        /* Navigation Bar */
+        nav {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 10%;
+            background: var(--nav-bg);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid #1f262e;
+            z-index: 1000;
+        }
+
+        .logo {
+            /* Playfair for the Logo */
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 3rem;
+            margin: 0;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        /* Main Layout */
+        .container {
+            max-width: 850px;
+            margin: 8rem auto;
+            padding: 0 30px;
+        }
+
+        h1 {
+            /* Playfair for the Hero Heading */
+            font-family: 'Playfair Display', serif;
+            font-size: 4.5rem;
+            font-weight: 700;
+            margin-bottom: 2.5rem;
+            line-height: 1.1;
+            color: #ffffff;
+        }
+
+        .content-box {
+            background: var(--card-bg);
+            padding: 3.5rem;
+            border-radius: 4px; /* Sharper edges for a more professional look */
+            border-left: 4px solid var(--accent);
+            box-shadow: 20px 20px 60px rgba(0,0,0,0.5);
+        }
+
+        p {
+            font-size: 1.15rem;
+            font-weight: 300;
+            margin-bottom: 1.8rem;
+            color: var(--text-dim);
+        }
+
+        strong {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 5rem 2rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">The Yangtze River</div>
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+            <li><a href="expedition.html">Expedition</a></li>
+            <li><a href="history.html">History</a></li>
+            <li><a href="facts.html">Facts</a></li>
+            <li><a href="tourist.html">Tourism</a></li>
+            <li><a href="quicklinks.html">Quick Links</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <h1>Yangtze River<br>Edward</h1>
+        
+        <div class="content-box">
+        <p>⬆️⬆️</p>
+            <p>
+To get started click one of the links above
+            </p>
+                        <p>
+Go down for a video
+            </p>
+            <p>️⬇️️⬇️</p>
+            <p style="margin-top: 3rem; font-style: italic;">
+                START NOW! <a href="history.html" style="color: var(--accent);">HISTORY</a> page.
+            </p>
+        </div>
+    </main>
+    <video width="640" height="360" controls controlsList="nodownload" oncontextmenu="return false;">
+  <source src="https://raw.githack.com/ahw101/legendary-palm-tree/refs/heads/main/videoplayback.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+
+    <footer>
+        &copy; 2026 Edward White
+    </footer>
+
+</body>
+</html>
