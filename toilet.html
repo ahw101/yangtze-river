@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Kiosk</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #162033;
+      --muted: #69758a;
+      --line: #dfe5ee;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --success: #15803d;
+      --shadow: 0 24px 70px rgba(18, 36, 68, 0.12);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.08), transparent 35%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .kiosk {
+      width: min(1100px, 100%);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar {
+      padding: 30px 34px 24px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(255,255,255,.97), rgba(246,249,255,.96));
+    }
+
+    .brand {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-size: 27px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), #38bdf8);
+      box-shadow: 0 12px 25px rgba(37, 99, 235, .25);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -1.1px;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .content {
+      padding: 34px;
+    }
+
+    .step-label {
+      margin-bottom: 12px;
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--primary);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: 750;
+      font-size: 15px;
+    }
+
+    input {
+      width: 100%;
+      height: 58px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 0 16px;
+      outline: none;
+      background: #fbfcfe;
+      color: var(--text);
+      font: inherit;
+      font-size: 17px;
+      transition: .18s ease;
+    }
+
+    input:focus {
+      background: white;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .11);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      height: 58px;
+      padding: 0 24px;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary {
+      flex: 1;
+      color: white;
+      background: linear-gradient(135deg, var(--primary), #3b82f6);
+      box-shadow: 0 12px 25px rgba(37,99,235,.22);
+    }
+
+    .secondary {
+      background: #eef2f7;
+      color: #273247;
+    }
+
+    button:disabled {
+      opacity: .65;
+      cursor: wait;
+      transform: none;
+    }
+
+    .status {
+      display: none;
+      margin-top: 20px;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .status.show { display: block; }
+    .status.success {
+      color: var(--success);
+      background: #ecfdf3;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status.error {
+      color: var(--danger);
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    .summary {
+      display: none;
+      margin-top: 25px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 20px;
+    }
+
+    .summary.show { display: block; }
+
+    .summary-title {
+      font-weight: 850;
+      margin-bottom: 12px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 8px 0;
+      border-bottom: 1px solid #e8edf3;
+    }
+
+    .summary-row:last-child { border-bottom: 0; }
+
+    .summary-row span:first-child { color: var(--muted); }
+    .summary-row span:last-child { font-weight: 750; text-align: right; }
+
+    .footer {
+      padding: 18px 34px 26px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 10px; }
+      .topbar, .content { padding: 24px 20px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .actions { flex-direction: column-reverse; }
+      .summary-row { flex-direction: column; gap: 2px; }
+      .summary-row span:last-child { text-align: left; }
+      .footer { padding: 16px 20px 22px; }
+    }
+
+    @media (min-width: 1100px) {
+      body { padding: 40px; }
+    }
+  
+    body {
+      overflow-x: hidden;
+    }
+
+    .kiosk {
+      position: relative;
+      isolation: isolate;
+      min-height: min(860px, calc(100vh - 48px));
+    }
+
+    .ambient {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(2px);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .ambient-one {
+      width: 280px;
+      height: 280px;
+      top: -130px;
+      right: -80px;
+      background: rgba(59, 130, 246, .09);
+    }
+
+    .ambient-two {
+      width: 220px;
+      height: 220px;
+      bottom: -120px;
+      left: -80px;
+      background: rgba(14, 165, 233, .07);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+      animation: screenIn .35s ease;
+    }
+
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .15em;
+      color: var(--primary);
+      margin-bottom: 5px;
+    }
+
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 22px;
+      padding: 9px 12px;
+      border: 1px solid #dbe5f4;
+      border-radius: 999px;
+      color: #476078;
+      background: rgba(255,255,255,.7);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34,197,94,.11);
+    }
+
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fbfcfe;
+      transition: .18s ease;
+      overflow: hidden;
+    }
+
+    .input-wrap:focus-within {
+      background: white;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .11);
+    }
+
+    .input-wrap input {
+      border: 0;
+      box-shadow: none;
+      background: transparent;
+      height: 58px;
+      padding-left: 0;
+    }
+
+    .input-wrap input:focus {
+      box-shadow: none;
+    }
+
+    .field-icon {
+      width: 46px;
+      padding-left: 14px;
+      font-size: 17px;
+      opacity: .7;
+    }
+
+    .actions {
+      margin-top: 30px;
+    }
+
+    .primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .button-arrow {
+      font-size: 22px;
+      line-height: 1;
+      transition: transform .2s ease;
+    }
+
+    .primary:hover .button-arrow {
+      transform: translateX(4px);
+    }
+
+    .secondary {
+      min-width: 110px;
+    }
+
+    .success-screen {
+      min-height: min(860px, calc(100vh - 48px));
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 52px 28px;
+      background:
+        radial-gradient(circle at 50% 15%, rgba(34, 197, 94, .12), transparent 32%),
+        linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,251,255,.98));
+      animation: successIn .45s ease;
+    }
+
+    .success-screen.show {
+      display: flex;
+    }
+
+    @keyframes successIn {
+      from { opacity: 0; transform: scale(.985); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .success-card {
+      width: min(620px, 100%);
+      text-align: center;
+    }
+
+    .success-ring {
+      width: 112px;
+      height: 112px;
+      margin: 0 auto 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #ecfdf3;
+      box-shadow:
+        0 0 0 14px rgba(34, 197, 94, .06),
+        0 18px 50px rgba(21,128,61,.12);
+      animation: pop .55s cubic-bezier(.2,.8,.2,1);
+    }
+
+    @keyframes pop {
+      0% { opacity: 0; transform: scale(.4); }
+      70% { transform: scale(1.08); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .success-check {
+      width: 64px;
+      height: 64px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      font-size: 35px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #22c55e, #15803d);
+      box-shadow: 0 10px 28px rgba(21,128,61,.26);
+    }
+
+    .success-eyebrow {
+      color: #15803d;
+    }
+
+    .success-card h2 {
+      margin: 2px 0 8px;
+      font-size: clamp(42px, 7vw, 64px);
+      letter-spacing: -2px;
+    }
+
+    .success-message {
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .success-details {
+      width: min(480px, 100%);
+      margin: 28px auto;
+      padding: 18px 20px;
+      border: 1px solid #dbe5df;
+      border-radius: 18px;
+      background: rgba(255,255,255,.8);
+    }
+
+    .success-name {
+      font-weight: 850;
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .success-time {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .countdown {
+      width: min(480px, 100%);
+      margin: 0 auto;
+      padding: 14px 16px 15px;
+      border-radius: 16px;
+      background: #f7faf8;
+      border: 1px solid #e1ebe4;
+      text-align: left;
+    }
+
+    .countdown-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .countdown-top strong {
+      color: var(--text);
+    }
+
+    .progress {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e2e8e5;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      transform-origin: left center;
+    }
+
+    .another-button {
+      margin-top: 20px;
+      height: 50px;
+      background: #eef2f7;
+      color: #273247;
+      padding: 0 18px;
+      font-size: 14px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 760px) {
+      .kiosk {
+        min-height: calc(100vh - 20px);
+      }
+
+      .success-screen {
+        min-height: calc(100vh - 20px);
+        padding: 36px 20px;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+  <main class="kiosk">
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <!-- HOME / BOOKING SCREEN -->
+    <section id="bookingScreen" class="screen active">
+      <header class="topbar">
+        <div class="brand">
+   
+          <div>
+            <div class="eyebrow">ANIMAL INN</div>
+            <a href="" rel="nofollow"><img alt="banner" src="https://landings-cdn.adsterratech.com/referralBanners/png/728%20x%2090%20px.png" /></a>
+            <h1>Book a Slot</h1>
+            <p class="subtitle">Welcome to the animal inn!</p>
+          </div>
+        </div>
+        <div class="step-pill">
+          <span class="step-dot"></span>
+          Online
+         
+        </div>
+        
+      </header>
+
+      <section class="content">
+        <div class="step-label">Booking details</div>
+
+        <form id="bookingForm" autocomplete="off">
+          <div class="form-grid">
+
+            <div class="field full">
+              <label for="name">Name</label>
+              <div class="input-wrap">
+                <span class="field-icon">👤</span>
+                <input id="name" name="name" type="text" placeholder="Enter your name" maxlength="120" required />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="startDate">Start date</label>
+              <div class="input-wrap">
+                <span class="field-icon">📅</span>
+                <input id="startDate" name="startDate" type="date" required />
+              </div>
+              <div class="hint">The date your booking starts.</div>
+            </div>
+
+            <div class="field">
+              <label for="startTime">Start time</label>
+              <div class="input-wrap">
+                <span class="field-icon">🕐</span>
+                <input id="startTime" name="startTime" type="time" required />
+              </div>
+              <div class="hint">The time your booking starts.</div>
+            </div>
+
+            <div class="field">
+              <label for="endDate">End date</label>
+              <div class="input-wrap">
+                <span class="field-icon">📅</span>
+                <input id="endDate" name="endDate" type="date" required />
+              </div>
+              <div class="hint">The date your booking ends.</div>
+            </div>
+
+            <div class="field">
+              <label for="endTime">End time</label>
+              <div class="input-wrap">
+                <span class="field-icon">🕐</span>
+                <input id="endTime" name="endTime" type="time" required />
+              </div>
+              <div class="hint">The time your booking ends.</div>
+            </div>
+          </div>
+
+          <div id="status" class="status" role="alert"></div>
+
+          <div id="summary" class="summary">
+            <div class="summary-title">Booking summary</div>
+            <div class="summary-row">
+              <span>Name</span>
+              <span id="summaryName">—</span>
+            </div>
+            <div class="summary-row">
+              <span>Starts</span>
+              <span id="summaryStart">—</span>
+            </div>
+            <div class="summary-row">
+              <span>Ends</span>
+              <span id="summaryEnd">—</span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="secondary" id="clearButton">
+              <span>Clear</span>
+            </button>
+            <button type="submit" class="primary" id="bookButton">
+              <span>Book now</span>
+              <span class="button-arrow">→</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <footer class="footer">
+        <span>Secure kiosk booking</span>
+        <span>•</span>
+        <span>Ready for the next booking</span>
+      </footer>
+    </section>
+
+    <!-- SUCCESS SCREEN -->
+    <section id="successScreen" class="success-screen">
+      <div class="success-card">
+        <div class="success-ring">
+          <div class="success-check">✓</div>
+        </div>
+
+        <div class="eyebrow success-eyebrow">BOOKING CONFIRMED</div>
+        <h2>Success!</h2>
+        <p class="success-message">Your booking has been saved successfully.</p>
+
+        <div class="success-details">
+          <div class="success-name" id="successName">—</div>
+          <div class="success-time" id="successBooking">—</div>
+        </div>
+
+        <div class="countdown">
+          <div class="countdown-top">
+            <span>Returning to booking screen</span>
+            <strong><span id="countdown">10</span>s</strong>
+          </div>
+          <div class="progress">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+        </div>
+
+        <button id="bookAnotherButton" type="button" class="another-button">
+          Book another slot
+        </button>
+      </div>
+    </section><a href="" rel="nofollow"><img alt="banner" src="https://landings-cdn.adsterratech.com/referralBanners/png/728%20x%2090%20px.png" /></a>
+    <script src="https://g.ezodn.com/privacy/sa.cmp.js"></script>
+<script src="https://pl28769170.effectivecpmnetwork.com/6c/62/2e/6c622e7c4dc25a0ae53f6d2fa6100d99.js"></script>
+
+  </main>
+  
+
+  <script>
+    // ------------------------------------------------------------
+    // SUPABASE CONFIG
+    // ------------------------------------------------------------
+    const SUPABASE_URL = "https://cjnccuhndzxprjyuawjr.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_64EzKYsi__8oT4h4EJHP7A_iLnkJlla";
+
+    // Change this ONLY if your Supabase table has a different name.
+    const TABLE_NAME = "Bookings";
+
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ------------------------------------------------------------
+    // ELEMENTS
+    // ------------------------------------------------------------
+    const form = document.getElementById("bookingForm");
+    const nameInput = document.getElementById("name");
+    const startDateInput = document.getElementById("startDate");
+    const startTimeInput = document.getElementById("startTime");
+    const endDateInput = document.getElementById("endDate");
+    const endTimeInput = document.getElementById("endTime");
+
+    const bookButton = document.getElementById("bookButton");
+    const clearButton = document.getElementById("clearButton");
+    const statusBox = document.getElementById("status");
+    const summary = document.getElementById("summary");
+
+    const summaryName = document.getElementById("summaryName");
+    const summaryStart = document.getElementById("summaryStart");
+    const summaryEnd = document.getElementById("summaryEnd");
+
+    const bookingScreen = document.getElementById("bookingScreen");
+    const successScreen = document.getElementById("successScreen");
+    const successName = document.getElementById("successName");
+    const successBooking = document.getElementById("successBooking");
+    const countdownEl = document.getElementById("countdown");
+    const progressBar = document.getElementById("progressBar");
+    const bookAnotherButton = document.getElementById("bookAnotherButton");
+
+    let countdownTimer = null;
+
+    // ------------------------------------------------------------
+    // HELPERS
+    // ------------------------------------------------------------
+    function showStatus(message, type) {
+      statusBox.textContent = message;
+      statusBox.className = "status show " + type;
+    }
+
+    function hideStatus() {
+      statusBox.textContent = "";
+      statusBox.className = "status";
+    }
+
+    function clearSummary() {
+      summary.classList.remove("show");
+      summaryName.textContent = "—";
+      summaryStart.textContent = "—";
+      summaryEnd.textContent = "—";
+    }
+
+    function toDateTime(date, time) {
+      return new Date(`${date}T${time}:00`);
+    }
+
+    function prettyDate(value) {
+      if (!value) return "";
+      const d = new Date(`${value}T00:00:00`);
+      return d.toLocaleDateString("en-GB", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    function prettyTime(value) {
+      if (!value) return "";
+      const [hours, minutes] = value.split(":");
+      const d = new Date();
+      d.setHours(Number(hours), Number(minutes), 0, 0);
+
+      return d.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function validateBooking() {
+      if (!nameInput.value.trim()) {
+        return "Please enter your name.";
+      }
+
+      if (!startDateInput.value || !startTimeInput.value ||
+          !endDateInput.value || !endTimeInput.value) {
+        return "Please complete all of the date and time fields.";
+      }
+
+      const start = toDateTime(startDateInput.value, startTimeInput.value);
+      const end = toDateTime(endDateInput.value, endTimeInput.value);
+
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        return "Please enter valid dates and times.";
+      }
+
+      if (end <= start) {
+        return "The end date/time must be after the start date/time.";
+      }
+
+      return null;
+    }
+
+    function updateSummary() {
+      summaryName.textContent = nameInput.value.trim() || "—";
+
+      summaryStart.textContent =
+        startDateInput.value && startTimeInput.value
+          ? `${prettyDate(startDateInput.value)} at ${prettyTime(startTimeInput.value)}`
+          : "—";
+
+      summaryEnd.textContent =
+        endDateInput.value && endTimeInput.value
+          ? `${prettyDate(endDateInput.value)} at ${prettyTime(endTimeInput.value)}`
+          : "—";
+
+      summary.classList.add("show");
+    }
+
+    function setButtonBusy(busy) {
+      bookButton.disabled = busy;
+      clearButton.disabled = busy;
+      bookButton.innerHTML = busy
+        ? "<span>Saving...</span>"
+        : '<span>Book now</span><span class="button-arrow">→</span>';
+    }
+
+    function resetForm() {
+      form.reset();
+      startDateInput.value = todayISO;
+      endDateInput.value = todayISO;
+      endDateInput.min = todayISO;
+      hideStatus();
+      clearSummary();
+    }
+
+    function showBookingScreen() {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+
+      successScreen.classList.remove("show");
+      bookingScreen.classList.add("active");
+
+      resetForm();
+
+      setTimeout(() => {
+        nameInput.focus();
+      }, 150);
+    }
+
+    function showSuccessScreen() {
+      bookingScreen.classList.remove("active");
+      successScreen.classList.add("show");
+
+      let remaining = 10;
+      countdownEl.textContent = remaining;
+      progressBar.style.transition = "none";
+      progressBar.style.transform = "scaleX(1)";
+
+      // Force a layout so the progress animation starts cleanly.
+      progressBar.offsetHeight;
+      progressBar.style.transition = "transform 10s linear";
+      progressBar.style.transform = "scaleX(0)";
+
+      clearInterval(countdownTimer);
+
+      countdownTimer = setInterval(() => {
+        remaining -= 1;
+        countdownEl.textContent = remaining;
+
+        if (remaining <= 0) {
+          clearInterval(countdownTimer);
+          countdownTimer = null;
+          showBookingScreen();
+        }
+      }, 1000);
+    }
+
+    // ------------------------------------------------------------
+    // DEFAULTS
+    // ------------------------------------------------------------
+    const today = new Date();
+    const todayISO = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0")
+    ].join("-");
+
+    startDateInput.min = todayISO;
+    endDateInput.min = todayISO;
+    startDateInput.value = todayISO;
+    endDateInput.value = todayISO;
+
+    // ------------------------------------------------------------
+    // DATE RELATIONSHIP
+    // ------------------------------------------------------------
+    startDateInput.addEventListener("change", () => {
+      endDateInput.min = startDateInput.value;
+
+      if (endDateInput.value && endDateInput.value < startDateInput.value) {
+        endDateInput.value = startDateInput.value;
+      }
+
+      hideStatus();
+      updateSummary();
+    });
+
+    [
+      nameInput,
+      startTimeInput,
+      endDateInput,
+      endTimeInput
+    ].forEach((input) => {
+      input.addEventListener("input", () => {
+        hideStatus();
+        updateSummary();
+      });
+    });
+
+    // ------------------------------------------------------------
+    // SUBMIT / INSERT
+    // ------------------------------------------------------------
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideStatus();
+
+      const validationError = validateBooking();
+      if (validationError) {
+        showStatus(validationError, "error");
+        return;
+      }
+
+      setButtonBusy(true);
+
+      const booking = {
+        Time: startTimeInput.value,
+        Date: startDateInput.value,
+        name: nameInput.value.trim(),
+        end_date: endDateInput.value,
+        end_time: endTimeInput.value
+      };
+
+      try {
+        const { error } = await db
+          .from(TABLE_NAME)
+          .insert([booking]);
+
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
+
+        // Fill the success screen before clearing the form.
+        successName.textContent = booking.name;
+        successBooking.textContent =
+          `${prettyDate(booking.Date)} • ${prettyTime(booking.Time)} — ${prettyDate(booking.end_date)} • ${prettyTime(booking.end_time)}`;
+
+        form.reset();
+        showSuccessScreen();
+
+      } catch (error) {
+        console.error(error);
+
+        let message = "The booking could not be saved.";
+
+        if (error?.message) {
+          message += ` ${error.message}`;
+        }
+
+        message += " Check your Supabase table and INSERT policy.";
+
+        showStatus(message, "error");
+      } finally {
+        setButtonBusy(false);
+      }
+    });
+
+    clearButton.addEventListener("click", () => {
+      resetForm();
+      nameInput.focus();
+    });
+
+    bookAnotherButton.addEventListener("click", showBookingScreen);
+
+    window.addEventListener("load", () => {
+      nameInput.focus();
+    });
+  </script>
+</body>
+</html>
