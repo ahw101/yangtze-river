@@ -2,785 +2,868 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Booking Kiosk</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f8fc" />
+  <title>Booking App</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
-      --bg: #f4f7fb;
-      --card: #ffffff;
-      --text: #162033;
-      --muted: #69758a;
-      --line: #dfe5ee;
+      --bg: #f5f6fa;
+      --surface: rgba(255,255,255,.93);
+      --surface-2: #f1f3f8;
+      --text: #101828;
+      --muted: #667085;
+      --line: #e5e7ee;
       --primary: #2563eb;
-      --primary-dark: #1d4ed8;
+      --primary-2: #4f46e5;
+      --success: #16a34a;
       --danger: #dc2626;
-      --success: #15803d;
-      --shadow: 0 24px 70px rgba(18, 36, 68, 0.12);
-      --radius: 28px;
+      --shadow: 0 20px 70px rgba(16,24,40,.12);
+      --radius: 30px;
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     html, body {
       margin: 0;
       min-height: 100%;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 35%),
-        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.08), transparent 35%),
-        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
+      background:
+        radial-gradient(circle at 15% 0%, rgba(79,70,229,.10), transparent 30%),
+        radial-gradient(circle at 100% 35%, rgba(37,99,235,.09), transparent 28%),
+        var(--bg);
     }
 
     body {
       min-height: 100vh;
       display: flex;
-      align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 20px;
     }
 
-    .kiosk {
-      width: min(1100px, 100%);
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid rgba(255,255,255,.8);
+    button, input { font: inherit; }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(520px, 100%);
+      min-height: min(900px, calc(100vh - 40px));
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,.85);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: hidden;
-      backdrop-filter: blur(14px);
+      position: relative;
+      backdrop-filter: blur(20px);
     }
 
-    .topbar {
-      padding: 30px 34px 24px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(135deg, rgba(255,255,255,.97), rgba(246,249,255,.96));
+    .app-header {
+      padding: 22px 22px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(229,231,238,.8);
+    }
+
+    .brand-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
 
     .brand {
       display: flex;
-      gap: 16px;
       align-items: center;
+      gap: 12px;
     }
 
-    .logo {
-      width: 58px;
-      height: 58px;
-      border-radius: 18px;
+    .app-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
       display: grid;
       place-items: center;
-      color: white;
-      font-size: 27px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--primary), #38bdf8);
-      box-shadow: 0 12px 25px rgba(37, 99, 235, .25);
+      color: #fff;
+      font-weight: 900;
+      font-size: 19px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 10px 24px rgba(37,99,235,.22);
     }
 
-    h1 {
+    .brand h1 {
       margin: 0;
-      font-size: clamp(28px, 4vw, 42px);
-      letter-spacing: -1.1px;
+      font-size: 19px;
+      letter-spacing: -.4px;
     }
 
-    .subtitle {
-      margin: 5px 0 0;
+    .brand p {
+      margin: 2px 0 0;
       color: var(--muted);
-      font-size: 15px;
+      font-size: 12px;
+    }
+
+    .mini-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: #f0fdf4;
+      color: #15803d;
+      font-size: 11px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .mini-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34,197,94,.10);
     }
 
     .content {
-      padding: 34px;
+      padding: 24px 20px 110px;
     }
 
-    .step-label {
-      margin-bottom: 12px;
-      font-weight: 800;
-      font-size: 14px;
+    .view {
+      display: none;
+      animation: viewIn .28s ease;
+    }
+
+    .view.active { display: block; }
+
+    @keyframes viewIn {
+      from { opacity: 0; transform: translateY(7px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero {
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
       color: var(--primary);
-      letter-spacing: .04em;
       text-transform: uppercase;
+      letter-spacing: .14em;
+      font-weight: 900;
+      font-size: 10px;
+      margin-bottom: 6px;
     }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 20px;
+    .hero h2 {
+      margin: 0;
+      font-size: 31px;
+      letter-spacing: -1px;
+    }
+
+    .hero p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--line);
+      border-radius: 23px;
+      padding: 17px;
+      box-shadow: 0 8px 26px rgba(16,24,40,.04);
+      margin-bottom: 14px;
     }
 
     .field {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
+      margin-bottom: 15px;
     }
 
-    .field.full {
-      grid-column: 1 / -1;
+    .field:last-child { margin-bottom: 0; }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 800;
+      font-size: 13px;
     }
 
-    label {
-      font-weight: 750;
-      font-size: 15px;
-    }
-
-    input {
+    .input {
       width: 100%;
-      height: 58px;
+      height: 52px;
       border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 0 16px;
+      background: #fafbfc;
+      border-radius: 15px;
+      padding: 0 14px;
       outline: none;
-      background: #fbfcfe;
       color: var(--text);
-      font: inherit;
-      font-size: 17px;
-      transition: .18s ease;
+      font-size: 15px;
+      transition: .17s ease;
     }
 
-    input:focus {
-      background: white;
+    .input:focus {
+      background: #fff;
       border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, .11);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.10);
+    }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .time-button {
+      width: 100%;
+      height: 68px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: #fafbfc;
+      text-align: left;
+      padding: 11px 13px;
+      transition: .17s ease;
+    }
+
+    .time-button:hover, .time-button:focus-visible {
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(37,99,235,.09);
+      outline: none;
+    }
+
+    .time-button .small {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+      margin-bottom: 4px;
+    }
+
+    .time-button .time-value {
+      display: block;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -.3px;
     }
 
     .hint {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
+      margin-top: 7px;
     }
-
-    .actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 26px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 16px;
-      height: 58px;
-      padding: 0 24px;
-      font: inherit;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
-    }
-
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
 
     .primary {
-      flex: 1;
-      color: white;
-      background: linear-gradient(135deg, var(--primary), #3b82f6);
-      box-shadow: 0 12px 25px rgba(37,99,235,.22);
+      width: 100%;
+      height: 56px;
+      border-radius: 16px;
+      color: #fff;
+      font-weight: 850;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 12px 26px rgba(37,99,235,.20);
+      transition: .16s ease;
     }
+
+    .primary:hover { transform: translateY(-1px); }
+    .primary:disabled { opacity: .65; cursor: wait; transform: none; }
 
     .secondary {
-      background: #eef2f7;
-      color: #273247;
-    }
-
-    button:disabled {
-      opacity: .65;
-      cursor: wait;
-      transform: none;
+      width: 100%;
+      height: 50px;
+      border-radius: 15px;
+      background: var(--surface-2);
+      color: #344054;
+      font-weight: 800;
+      margin-top: 10px;
     }
 
     .status {
       display: none;
-      margin-top: 20px;
-      border-radius: 16px;
-      padding: 14px 16px;
+      margin: 0 0 14px;
+      border-radius: 15px;
+      padding: 12px 13px;
+      font-size: 13px;
+      line-height: 1.4;
       font-weight: 700;
-      line-height: 1.45;
     }
 
     .status.show { display: block; }
-    .status.success {
-      color: var(--success);
-      background: #ecfdf3;
-      border: 1px solid #bbf7d0;
-    }
-
     .status.error {
-      color: var(--danger);
       background: #fef2f2;
       border: 1px solid #fecaca;
+      color: var(--danger);
     }
-
-    .summary {
-      display: none;
-      margin-top: 25px;
-      padding: 20px;
-      border: 1px solid var(--line);
-      background: #f8fafc;
-      border-radius: 20px;
-    }
-
-    .summary.show { display: block; }
-
-    .summary-title {
-      font-weight: 850;
-      margin-bottom: 12px;
-    }
-
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      padding: 8px 0;
-      border-bottom: 1px solid #e8edf3;
-    }
-
-    .summary-row:last-child { border-bottom: 0; }
-
-    .summary-row span:first-child { color: var(--muted); }
-    .summary-row span:last-child { font-weight: 750; text-align: right; }
-
-    .footer {
-      padding: 18px 34px 26px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    @media (max-width: 760px) {
-      body { padding: 10px; }
-      .topbar, .content { padding: 24px 20px; }
-      .form-grid { grid-template-columns: 1fr; }
-      .field.full { grid-column: auto; }
-      .actions { flex-direction: column-reverse; }
-      .summary-row { flex-direction: column; gap: 2px; }
-      .summary-row span:last-child { text-align: left; }
-      .footer { padding: 16px 20px 22px; }
-    }
-
-    @media (min-width: 1100px) {
-      body { padding: 40px; }
-    }
-  
-    body {
-      overflow-x: hidden;
-    }
-
-    .kiosk {
-      position: relative;
-      isolation: isolate;
-      min-height: min(860px, calc(100vh - 48px));
-    }
-
-    .ambient {
-      position: absolute;
-      border-radius: 999px;
-      filter: blur(2px);
-      pointer-events: none;
-      z-index: -1;
-    }
-
-    .ambient-one {
-      width: 280px;
-      height: 280px;
-      top: -130px;
-      right: -80px;
-      background: rgba(59, 130, 246, .09);
-    }
-
-    .ambient-two {
-      width: 220px;
-      height: 220px;
-      bottom: -120px;
-      left: -80px;
-      background: rgba(14, 165, 233, .07);
-    }
-
-    .screen {
-      display: none;
-    }
-
-    .screen.active {
-      display: block;
-      animation: screenIn .35s ease;
-    }
-
-    @keyframes screenIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .eyebrow {
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .15em;
-      color: var(--primary);
-      margin-bottom: 5px;
-    }
-
-    .step-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 22px;
-      padding: 9px 12px;
-      border: 1px solid #dbe5f4;
-      border-radius: 999px;
-      color: #476078;
-      background: rgba(255,255,255,.7);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .step-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 0 4px rgba(34,197,94,.11);
-    }
-
-    .input-wrap {
-      display: flex;
-      align-items: center;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: #fbfcfe;
-      transition: .18s ease;
-      overflow: hidden;
-    }
-
-    .input-wrap:focus-within {
-      background: white;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, .11);
-    }
-
-    .input-wrap input {
-      border: 0;
-      box-shadow: none;
-      background: transparent;
-      height: 58px;
-      padding-left: 0;
-    }
-
-    .input-wrap input:focus {
-      box-shadow: none;
-    }
-
-    .field-icon {
-      width: 46px;
-      padding-left: 14px;
-      font-size: 17px;
-      opacity: .7;
-    }
-
-    .actions {
-      margin-top: 30px;
-    }
-
-    .primary {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .button-arrow {
-      font-size: 22px;
-      line-height: 1;
-      transition: transform .2s ease;
-    }
-
-    .primary:hover .button-arrow {
-      transform: translateX(4px);
-    }
-
-    .secondary {
-      min-width: 110px;
-    }
-
-    .success-screen {
-      min-height: min(860px, calc(100vh - 48px));
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 52px 28px;
-      background:
-        radial-gradient(circle at 50% 15%, rgba(34, 197, 94, .12), transparent 32%),
-        linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,251,255,.98));
-      animation: successIn .45s ease;
-    }
-
-    .success-screen.show {
-      display: flex;
-    }
-
-    @keyframes successIn {
-      from { opacity: 0; transform: scale(.985); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .success-card {
-      width: min(620px, 100%);
-      text-align: center;
-    }
-
-    .success-ring {
-      width: 112px;
-      height: 112px;
-      margin: 0 auto 26px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      background: #ecfdf3;
-      box-shadow:
-        0 0 0 14px rgba(34, 197, 94, .06),
-        0 18px 50px rgba(21,128,61,.12);
-      animation: pop .55s cubic-bezier(.2,.8,.2,1);
-    }
-
-    @keyframes pop {
-      0% { opacity: 0; transform: scale(.4); }
-      70% { transform: scale(1.08); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-
-    .success-check {
-      width: 64px;
-      height: 64px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      color: white;
-      font-size: 35px;
-      font-weight: 900;
-      background: linear-gradient(135deg, #22c55e, #15803d);
-      box-shadow: 0 10px 28px rgba(21,128,61,.26);
-    }
-
-    .success-eyebrow {
+    .status.success {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
       color: #15803d;
     }
 
-    .success-card h2 {
-      margin: 2px 0 8px;
-      font-size: clamp(42px, 7vw, 64px);
-      letter-spacing: -2px;
+    .drink-list {
+      display: grid;
+      gap: 10px;
     }
 
-    .success-message {
-      margin: 0 auto;
-      color: var(--muted);
-      font-size: 18px;
-    }
-
-    .success-details {
-      width: min(480px, 100%);
-      margin: 28px auto;
-      padding: 18px 20px;
-      border: 1px solid #dbe5df;
+    .drink-option {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 13px;
+      text-align: left;
+      background: #fff;
+      border: 1px solid var(--line);
       border-radius: 18px;
-      background: rgba(255,255,255,.8);
+      transition: .17s ease;
     }
 
-    .success-name {
+    .drink-option:hover {
+      transform: translateY(-1px);
+    }
+
+    .drink-option.selected {
+      border-color: var(--primary);
+      background: #f7f9ff;
+      box-shadow: 0 0 0 4px rgba(37,99,235,.08);
+    }
+
+    .drink-icon {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: #f1f4fb;
+      font-size: 22px;
+    }
+
+    .drink-name {
       font-weight: 850;
+      font-size: 15px;
+      flex: 1;
+    }
+
+    .radio {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      display: grid;
+      place-items: center;
+    }
+
+    .selected .radio {
+      border-color: var(--primary);
+    }
+
+    .selected .radio::after {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .bottom-nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 15;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(18px);
+      border-top: 1px solid rgba(229,231,238,.95);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .nav-button {
+      height: 58px;
+      border-radius: 17px;
+      background: transparent;
+      color: #667085;
+      font-weight: 800;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .nav-button .nav-icon { font-size: 21px; line-height: 1; }
+    .nav-button.active {
+      color: var(--primary);
+      background: #eef4ff;
+    }
+
+    /* Custom time picker */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 14px;
+      background: rgba(15,23,42,.44);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-backdrop.show { display: flex; }
+
+    .time-modal {
+      width: min(520px, 100%);
+      background: #fff;
+      border-radius: 27px;
+      padding: 18px;
+      box-shadow: 0 30px 90px rgba(15,23,42,.25);
+      animation: sheetIn .25s ease;
+    }
+
+    @keyframes sheetIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-handle {
+      width: 42px;
+      height: 4px;
+      border-radius: 999px;
+      background: #d0d5dd;
+      margin: 0 auto 16px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 13px;
+    }
+
+    .modal-title {
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: #f2f4f7;
+      color: #475467;
       font-size: 20px;
-      margin-bottom: 5px;
     }
 
-    .success-time {
+    .time-display {
+      text-align: center;
+      font-size: 42px;
+      font-weight: 950;
+      letter-spacing: -1.4px;
+      margin: 4px 0 18px;
+    }
+
+    .picker-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 9px;
+    }
+
+    .picker-column {
+      height: 210px;
+      overflow-y: auto;
+      padding: 76px 0;
+      border-radius: 18px;
+      background: #f6f7fa;
+      scroll-snap-type: y mandatory;
+      overscroll-behavior: contain;
+    }
+
+    .picker-column::-webkit-scrollbar { display: none; }
+
+    .picker-item {
+      height: 46px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: #98a2b3;
+      scroll-snap-align: center;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .picker-item.active {
+      color: var(--text);
+      background: #fff;
+      margin: 0 9px;
+      border-radius: 13px;
+      box-shadow: 0 4px 12px rgba(16,24,40,.08);
+    }
+
+    .confirm-time {
+      width: 100%;
+      height: 52px;
+      margin-top: 13px;
+      border-radius: 15px;
+      background: var(--text);
+      color: #fff;
+      font-weight: 850;
+    }
+
+    /* Success */
+    .success-view {
+      min-height: 700px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 20px 120px;
+      text-align: center;
+    }
+
+    .success-view.active { display: flex; }
+
+    .success-card { width: 100%; }
+
+    .success-icon {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: grid;
+      place-items: center;
+      background: #ecfdf3;
+      box-shadow: 0 0 0 12px rgba(34,197,94,.07);
+      animation: successPop .5s cubic-bezier(.2,.8,.2,1);
+    }
+
+    @keyframes successPop {
+      0% { transform: scale(.45); opacity: 0; }
+      70% { transform: scale(1.08); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .success-icon span {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 30px;
+      font-weight: 950;
+      background: linear-gradient(135deg,#22c55e,#15803d);
+    }
+
+    .success-card h2 {
+      font-size: 43px;
+      margin: 0 0 7px;
+      letter-spacing: -1.6px;
+    }
+
+    .success-card p {
       color: var(--muted);
-      font-size: 14px;
+      margin: 0 auto;
+      max-width: 330px;
+      line-height: 1.5;
     }
 
-    .countdown {
-      width: min(480px, 100%);
-      margin: 0 auto;
-      padding: 14px 16px 15px;
+    .success-summary {
+      margin: 22px 0 14px;
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .success-summary strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .success-summary span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .countdown-box {
+      padding: 13px 14px;
+      background: #f8fafc;
       border-radius: 16px;
-      background: #f7faf8;
-      border: 1px solid #e1ebe4;
+      border: 1px solid var(--line);
       text-align: left;
     }
 
     .countdown-top {
       display: flex;
       justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 10px;
-      font-size: 13px;
+      gap: 12px;
+      font-size: 12px;
       color: var(--muted);
+      font-weight: 650;
+      margin-bottom: 9px;
     }
 
-    .countdown-top strong {
-      color: var(--text);
-    }
+    .countdown-top strong { color: var(--text); }
 
     .progress {
-      width: 100%;
-      height: 8px;
+      height: 7px;
       border-radius: 999px;
+      background: #e5e7eb;
       overflow: hidden;
-      background: #e2e8e5;
     }
 
     .progress-bar {
-      width: 100%;
       height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #22c55e, #16a34a);
+      background: linear-gradient(90deg,#22c55e,#16a34a);
       transform-origin: left center;
     }
 
-    .another-button {
-      margin-top: 20px;
+    .success-action {
+      width: 100%;
       height: 50px;
+      margin-top: 11px;
+      border-radius: 15px;
       background: #eef2f7;
-      color: #273247;
-      padding: 0 18px;
-      font-size: 14px;
+      color: #344054;
+      font-weight: 800;
     }
 
-    .footer {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    @media (max-width: 760px) {
-      .kiosk {
-        min-height: calc(100vh - 20px);
-      }
-
-      .success-screen {
-        min-height: calc(100vh - 20px);
-        padding: 36px 20px;
+    @media (max-width: 420px) {
+      body { padding: 0; }
+      .app {
+        width: 100%;
+        min-height: 100vh;
+        border: 0;
+        border-radius: 0;
       }
     }
 
+    @media (min-width: 700px) {
+      body { align-items: center; }
+    }
   </style>
 </head>
 
 <body>
-  <main class="kiosk">
-    <div class="ambient ambient-one"></div>
-    <div class="ambient ambient-two"></div>
-
-    <!-- HOME / BOOKING SCREEN -->
-    <section id="bookingScreen" class="screen active">
-      <header class="topbar">
+  <main class="app">
+    <header class="app-header">
+      <div class="brand-line">
         <div class="brand">
-   
+          <div class="app-icon">B</div>
           <div>
-            <div class="eyebrow">ANIMAL INN</div>
-            <a href="https://beta.publishers.adsterra.com/referral/hJgh5syStp" rel="nofollow"><img alt="banner" src="https://landings-cdn.adsterratech.com/referralBanners/png/728%20x%2090%20px.png" /></a>
-            <h1>Book a Slot</h1>
-            <p class="subtitle">Welcome to the animal inn!</p>
+            <h1>Booking</h1>
+            <p>Quick self-service</p>
           </div>
         </div>
-        <div class="step-pill">
-          <span class="step-dot"></span>
+
+        <div class="mini-status">
+          <span class="mini-status-dot"></span>
           Online
-         
         </div>
-        
-      </header>
+      </div>
+    </header>
 
-      <section class="content">
-        <div class="step-label">Booking details</div>
+    <div class="content">
+      <!-- BOOKING VIEW -->
+      <section id="bookingView" class="view active">
+        <div class="hero">
+          <div class="eyebrow">Booking</div>
+          <h2>Choose your time</h2>
+          <p>Enter your name, date and times below. The custom time picker makes it quick to use on a touchscreen.</p>
+        </div>
 
-        <form id="bookingForm" autocomplete="off">
-          <div class="form-grid">
-
-            <div class="field full">
-              <label for="name">Name</label>
-              <div class="input-wrap">
-                <span class="field-icon">👤</span>
-                <input id="name" name="name" type="text" placeholder="Enter your name" maxlength="120" required />
-              </div>
+        <form id="bookingForm">
+          <div class="card">
+            <div class="field">
+              <label for="bookingName">Name</label>
+              <input id="bookingName" class="input" type="text" maxlength="120" placeholder="Your name" autocomplete="name" required />
             </div>
 
             <div class="field">
               <label for="startDate">Start date</label>
-              <div class="input-wrap">
-                <span class="field-icon">📅</span>
-                <input id="startDate" name="startDate" type="date" required />
-              </div>
-              <div class="hint">The date your booking starts.</div>
+              <input id="startDate" class="input" type="date" required />
             </div>
 
             <div class="field">
-              <label for="startTime">Start time</label>
-              <div class="input-wrap">
-                <span class="field-icon">🕐</span>
-                <input id="startTime" name="startTime" type="time" required />
-              </div>
-              <div class="hint">The time your booking starts.</div>
+              <label>Start time</label>
+              <button class="time-button" id="startTimeButton" type="button">
+                <span class="small">START</span>
+                <span class="time-value" id="startTimeValue">09:00 AM</span>
+              </button>
             </div>
 
             <div class="field">
               <label for="endDate">End date</label>
-              <div class="input-wrap">
-                <span class="field-icon">📅</span>
-                <input id="endDate" name="endDate" type="date" required />
-              </div>
-              <div class="hint">The date your booking ends.</div>
+              <input id="endDate" class="input" type="date" required />
             </div>
 
             <div class="field">
-              <label for="endTime">End time</label>
-              <div class="input-wrap">
-                <span class="field-icon">🕐</span>
-                <input id="endTime" name="endTime" type="time" required />
-              </div>
-              <div class="hint">The time your booking ends.</div>
+              <label>End time</label>
+              <button class="time-button" id="endTimeButton" type="button">
+                <span class="small">END</span>
+                <span class="time-value" id="endTimeValue">05:00 PM</span>
+              </button>
             </div>
           </div>
 
-          <div id="status" class="status" role="alert"></div>
+          <div id="bookingStatus" class="status" role="alert"></div>
 
-          <div id="summary" class="summary">
-            <div class="summary-title">Booking summary</div>
-            <div class="summary-row">
-              <span>Name</span>
-              <span id="summaryName">—</span>
-            </div>
-            <div class="summary-row">
-              <span>Starts</span>
-              <span id="summaryStart">—</span>
-            </div>
-            <div class="summary-row">
-              <span>Ends</span>
-              <span id="summaryEnd">—</span>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button type="button" class="secondary" id="clearButton">
-              <span>Clear</span>
-            </button>
-            <button type="submit" class="primary" id="bookButton">
-              <span>Book now</span>
-              <span class="button-arrow">→</span>
-            </button>
-          </div>
+          <button id="bookButton" class="primary" type="submit">Book now</button>
+          <button id="clearBookingButton" class="secondary" type="button">Clear</button>
         </form>
       </section>
 
-      <footer class="footer">
-        <span>Secure kiosk booking</span>
-        <span>•</span>
-        <span>Ready for the next booking</span>
-      </footer>
-    </section>
-
-    <!-- SUCCESS SCREEN -->
-    <section id="successScreen" class="success-screen">
-      <div class="success-card">
-        <div class="success-ring">
-          <div class="success-check">✓</div>
+      <!-- ORDERING VIEW -->
+      <section id="orderingView" class="view">
+        <div class="hero">
+          <div class="eyebrow">Ordering</div>
+          <h2>Order a drink</h2>
+          <p>Choose a drink and enter the name for the order.</p>
         </div>
 
-        <div class="eyebrow success-eyebrow">BOOKING CONFIRMED</div>
-        <h2>Success!</h2>
-        <p class="success-message">Your booking has been saved successfully.</p>
+        <form id="drinkForm">
+          <div class="card">
+            <div class="field">
+              <label for="drinkName">Name</label>
+              <input id="drinkName" class="input" type="text" maxlength="120" placeholder="Your name" autocomplete="name" required />
+            </div>
 
-        <div class="success-details">
-          <div class="success-name" id="successName">—</div>
-          <div class="success-time" id="successBooking">—</div>
-        </div>
-
-        <div class="countdown">
-          <div class="countdown-top">
-            <span>Returning to booking screen</span>
-            <strong><span id="countdown">10</span>s</strong>
+            <div class="field">
+              <label>What would you like?</label>
+              <div id="drinkList" class="drink-list">
+                <button type="button" class="drink-option" data-drink="Water">
+                  <span class="drink-icon">💧</span>
+                  <span class="drink-name">Water</span>
+                  <span class="radio"></span>
+                </button>
+                <button type="button" class="drink-option" data-drink="Orange Juice">
+                  <span class="drink-icon">🍊</span>
+                  <span class="drink-name">Orange Juice</span>
+                  <span class="radio"></span>
+                </button>
+                <button type="button" class="drink-option" data-drink="Apple Juice">
+                  <span class="drink-icon">🍎</span>
+                  <span class="drink-name">Apple Juice</span>
+                  <span class="radio"></span>
+                </button>
+                <button type="button" class="drink-option" data-drink="Lemon Juice">
+                  <span class="drink-icon">🍋</span>
+                  <span class="drink-name">Lemon Juice</span>
+                  <span class="radio"></span>
+                </button>
+                <button type="button" class="drink-option" data-drink="Strawberry Juice">
+                  <span class="drink-icon">🍓</span>
+                  <span class="drink-name">Strawberry Juice</span>
+                  <span class="radio"></span>
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="progress">
-            <div id="progressBar" class="progress-bar"></div>
+
+          <div id="drinkStatus" class="status" role="alert"></div>
+          <button id="orderButton" class="primary" type="submit">Place order</button>
+        </form>
+      </section>
+
+      <!-- SUCCESS VIEW -->
+      <section id="successView" class="success-view view">
+        <div class="success-card">
+          <div class="success-icon"><span>✓</span></div>
+          <div class="eyebrow" id="successEyebrow">CONFIRMED</div>
+          <h2 id="successTitle">Success!</h2>
+          <p id="successMessage">Your booking has been saved successfully.</p>
+
+          <div class="success-summary">
+            <strong id="successPerson">—</strong>
+            <span id="successDetails">—</span>
           </div>
+
+          <div class="countdown-box">
+            <div class="countdown-top">
+              <span>Returning to the home screen</span>
+              <strong><span id="countdown">10</span>s</strong>
+            </div>
+            <div class="progress">
+              <div id="progressBar" class="progress-bar"></div>
+            </div>
+          </div>
+
+          <button id="successHomeButton" class="success-action" type="button">Back now</button>
         </div>
+      </section>
+    </div>
 
-        <button id="bookAnotherButton" type="button" class="another-button">
-          Book another slot
-        </button>
-      </div>
-    </section><a href="https://beta.publishers.adsterra.com/referral/hJgh5syStp" rel="nofollow"><img alt="banner" src="https://landings-cdn.adsterratech.com/referralBanners/png/728%20x%2090%20px.png" /></a>
-    <script src="https://g.ezodn.com/privacy/sa.cmp.js"></script>
-<script src="https://pl28769170.effectivecpmnetwork.com/6c/62/2e/6c622e7c4dc25a0ae53f6d2fa6100d99.js"></script>
-
+    <!-- APP NAV -->
+    <nav id="bottomNav" class="bottom-nav">
+      <button class="nav-button active" data-view="booking">
+        <span class="nav-icon">📅</span>
+        <span>Booking</span>
+      </button>
+      <button class="nav-button" data-view="ordering">
+        <span class="nav-icon">🥤</span>
+        <span>Ordering</span>
+      </button>
+    </nav>
   </main>
-  
+
+  <!-- CUSTOM TIME PICKER -->
+  <div id="timeModal" class="modal-backdrop" aria-hidden="true">
+    <div class="time-modal" role="dialog" aria-modal="true" aria-labelledby="timeModalTitle">
+      <div class="modal-handle"></div>
+
+      <div class="modal-header">
+        <div class="modal-title" id="timeModalTitle">Choose time</div>
+        <button id="closeTimeModal" class="modal-close" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div id="timeDisplay" class="time-display">09:00 AM</div>
+
+      <div class="picker-row">
+        <div id="hourPicker" class="picker-column" aria-label="Hours"></div>
+        <div id="minutePicker" class="picker-column" aria-label="Minutes"></div>
+        <div id="periodPicker" class="picker-column" aria-label="AM or PM"></div>
+      </div>
+
+      <button id="confirmTimeButton" class="confirm-time" type="button">Use this time</button>
+    </div>
+  </div>
 
   <script>
     // ------------------------------------------------------------
-    // SUPABASE CONFIG
+    // SUPABASE
     // ------------------------------------------------------------
     const SUPABASE_URL = "https://cjnccuhndzxprjyuawjr.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_64EzKYsi__8oT4h4EJHP7A_iLnkJlla";
 
-    // Change this ONLY if your Supabase table has a different name.
-    const TABLE_NAME = "Bookings";
-
     const { createClient } = supabase;
     const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ------------------------------------------------------------
-    // ELEMENTS
-    // ------------------------------------------------------------
-    const form = document.getElementById("bookingForm");
-    const nameInput = document.getElementById("name");
-    const startDateInput = document.getElementById("startDate");
-    const startTimeInput = document.getElementById("startTime");
-    const endDateInput = document.getElementById("endDate");
-    const endTimeInput = document.getElementById("endTime");
-
-    const bookButton = document.getElementById("bookButton");
-    const clearButton = document.getElementById("clearButton");
-    const statusBox = document.getElementById("status");
-    const summary = document.getElementById("summary");
-
-    const summaryName = document.getElementById("summaryName");
-    const summaryStart = document.getElementById("summaryStart");
-    const summaryEnd = document.getElementById("summaryEnd");
-
-    const bookingScreen = document.getElementById("bookingScreen");
-    const successScreen = document.getElementById("successScreen");
-    const successName = document.getElementById("successName");
-    const successBooking = document.getElementById("successBooking");
-    const countdownEl = document.getElementById("countdown");
-    const progressBar = document.getElementById("progressBar");
-    const bookAnotherButton = document.getElementById("bookAnotherButton");
-
-    let countdownTimer = null;
+    const BOOKING_TABLE = "Bookings";
+    const DRINKS_TABLE = "Drinks";
 
     // ------------------------------------------------------------
-    // HELPERS
+    // DATE / TIME HELPERS
     // ------------------------------------------------------------
-    function showStatus(message, type) {
-      statusBox.textContent = message;
-      statusBox.className = "status show " + type;
-    }
-
-    function hideStatus() {
-      statusBox.textContent = "";
-      statusBox.className = "status";
-    }
-
-    function clearSummary() {
-      summary.classList.remove("show");
-      summaryName.textContent = "—";
-      summaryStart.textContent = "—";
-      summaryEnd.textContent = "—";
-    }
-
-    function toDateTime(date, time) {
-      return new Date(`${date}T${time}:00`);
-    }
+    const today = new Date();
+    const todayISO = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0")
+    ].join("-");
 
     function prettyDate(value) {
-      if (!value) return "";
       const d = new Date(`${value}T00:00:00`);
       return d.toLocaleDateString("en-GB", {
         weekday: "short",
@@ -790,100 +873,392 @@
       });
     }
 
-    function prettyTime(value) {
-      if (!value) return "";
-      const [hours, minutes] = value.split(":");
-      const d = new Date();
-      d.setHours(Number(hours), Number(minutes), 0, 0);
+    function toMinutes(h, m, period) {
+      let hour = Number(h);
+      if (period === "AM" && hour === 12) hour = 0;
+      if (period === "PM" && hour !== 12) hour += 12;
+      return hour * 60 + Number(m);
+    }
 
-      return d.toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit"
+    function to24Hour(h, m, period) {
+      let hour = Number(h);
+      if (period === "AM" && hour === 12) hour = 0;
+      if (period === "PM" && hour !== 12) hour += 12;
+      return `${String(hour).padStart(2, "0")}:${String(Number(m)).padStart(2, "0")}`;
+    }
+
+    function format12Hour(time24) {
+      const [h, m] = time24.split(":").map(Number);
+      const period = h >= 12 ? "PM" : "AM";
+      const hour = h % 12 || 12;
+      return `${String(hour).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
+    }
+
+    // ------------------------------------------------------------
+    // VIEWS / NAVIGATION
+    // ------------------------------------------------------------
+    const bookingView = document.getElementById("bookingView");
+    const orderingView = document.getElementById("orderingView");
+    const successView = document.getElementById("successView");
+    const bottomNav = document.getElementById("bottomNav");
+
+    const navButtons = document.querySelectorAll(".nav-button");
+
+    function showView(viewName) {
+      bookingView.classList.toggle("active", viewName === "booking");
+      orderingView.classList.toggle("active", viewName === "ordering");
+      successView.classList.remove("active");
+
+      navButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.view === viewName);
+      });
+
+      if (viewName === "booking") {
+        setTimeout(() => document.getElementById("bookingName").focus(), 80);
+      } else if (viewName === "ordering") {
+        setTimeout(() => document.getElementById("drinkName").focus(), 80);
+      }
+    }
+
+    navButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        showView(button.dataset.view);
+      });
+    });
+
+    function showSuccess(kind, person, details) {
+      bookingView.classList.remove("active");
+      orderingView.classList.remove("active");
+      successView.classList.add("active");
+      bottomNav.style.display = "none";
+
+      document.getElementById("successEyebrow").textContent =
+        kind === "booking" ? "BOOKING CONFIRMED" : "ORDER CONFIRMED";
+      document.getElementById("successTitle").textContent =
+        kind === "booking" ? "Success!" : "Order placed!";
+      document.getElementById("successMessage").textContent =
+        kind === "booking"
+          ? "Your booking has been saved successfully."
+          : "Your drink order has been saved successfully.";
+
+      document.getElementById("successPerson").textContent = person;
+      document.getElementById("successDetails").textContent = details;
+
+      startSuccessCountdown();
+    }
+
+    // ------------------------------------------------------------
+    // STATUS
+    // ------------------------------------------------------------
+    function showStatus(element, message, type) {
+      element.textContent = message;
+      element.className = `status show ${type}`;
+    }
+
+    function hideStatus(element) {
+      element.textContent = "";
+      element.className = "status";
+    }
+
+    // ------------------------------------------------------------
+    // CUSTOM TIME PICKER
+    // ------------------------------------------------------------
+    const timeModal = document.getElementById("timeModal");
+    const closeTimeModal = document.getElementById("closeTimeModal");
+    const confirmTimeButton = document.getElementById("confirmTimeButton");
+    const timeDisplay = document.getElementById("timeDisplay");
+    const hourPicker = document.getElementById("hourPicker");
+    const minutePicker = document.getElementById("minutePicker");
+    const periodPicker = document.getElementById("periodPicker");
+
+    let activeTimeField = "start";
+    let selectedTime = { hour: 9, minute: 0, period: "AM" };
+
+    const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+    const minutes = Array.from({ length: 60 }, (_, i) => i).filter((m) => m % 5 === 0);
+    const periods = ["AM", "PM"];
+
+    function renderPicker(column, values, activeValue) {
+      column.innerHTML = "";
+
+      values.forEach((value) => {
+        const item = document.createElement("div");
+        item.className = "picker-item";
+        item.dataset.value = value;
+        item.textContent = String(value).padStart(2, "0");
+        if (String(value) === String(activeValue)) item.classList.add("active");
+
+        item.addEventListener("click", () => {
+          column.querySelectorAll(".picker-item").forEach((x) => x.classList.remove("active"));
+          item.classList.add("active");
+
+          if (column === hourPicker) selectedTime.hour = Number(value);
+          if (column === minutePicker) selectedTime.minute = Number(value);
+          if (column === periodPicker) selectedTime.period = value;
+
+          updateTimeDisplay();
+          item.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+
+        column.appendChild(item);
       });
     }
 
-    function validateBooking() {
-      if (!nameInput.value.trim()) {
-        return "Please enter your name.";
+    function updateTimeDisplay() {
+      timeDisplay.textContent =
+        `${String(selectedTime.hour).padStart(2, "0")}:${String(selectedTime.minute).padStart(2, "0")} ${selectedTime.period}`;
+    }
+
+    function openTimePicker(field) {
+      activeTimeField = field;
+
+      const value =
+        field === "start"
+          ? document.getElementById("startTimeValue").textContent
+          : document.getElementById("endTimeValue").textContent;
+
+      const match = value.match(/(\d{2}):(\d{2})\s(AM|PM)/);
+      if (match) {
+        selectedTime = {
+          hour: Number(match[1]),
+          minute: Number(match[2]),
+          period: match[3]
+        };
       }
 
-      if (!startDateInput.value || !startTimeInput.value ||
-          !endDateInput.value || !endTimeInput.value) {
-        return "Please complete all of the date and time fields.";
+      renderPicker(hourPicker, hours, selectedTime.hour);
+      renderPicker(minutePicker, minutes, selectedTime.minute);
+      renderPicker(periodPicker, periods, selectedTime.period);
+      updateTimeDisplay();
+
+      timeModal.classList.add("show");
+      timeModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closePicker() {
+      timeModal.classList.remove("show");
+      timeModal.setAttribute("aria-hidden", "true");
+    }
+
+    document.getElementById("startTimeButton").addEventListener("click", () => openTimePicker("start"));
+    document.getElementById("endTimeButton").addEventListener("click", () => openTimePicker("end"));
+    closeTimeModal.addEventListener("click", closePicker);
+
+    timeModal.addEventListener("click", (event) => {
+      if (event.target === timeModal) closePicker();
+    });
+
+    confirmTimeButton.addEventListener("click", () => {
+      const formatted =
+        `${String(selectedTime.hour).padStart(2, "0")}:${String(selectedTime.minute).padStart(2, "0")} ${selectedTime.period}`;
+
+      if (activeTimeField === "start") {
+        document.getElementById("startTimeValue").textContent = formatted;
+      } else {
+        document.getElementById("endTimeValue").textContent = formatted;
       }
 
-      const start = toDateTime(startDateInput.value, startTimeInput.value);
-      const end = toDateTime(endDateInput.value, endTimeInput.value);
+      closePicker();
+    });
 
-      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-        return "Please enter valid dates and times.";
+    // ------------------------------------------------------------
+    // BOOKING FORM
+    // ------------------------------------------------------------
+    const bookingForm = document.getElementById("bookingForm");
+    const bookingName = document.getElementById("bookingName");
+    const startDate = document.getElementById("startDate");
+    const endDate = document.getElementById("endDate");
+    const bookingStatus = document.getElementById("bookingStatus");
+    const bookButton = document.getElementById("bookButton");
+    const clearBookingButton = document.getElementById("clearBookingButton");
+
+    startDate.min = todayISO;
+    endDate.min = todayISO;
+    startDate.value = todayISO;
+    endDate.value = todayISO;
+
+    startDate.addEventListener("change", () => {
+      endDate.min = startDate.value;
+      if (endDate.value < startDate.value) endDate.value = startDate.value;
+      hideStatus(bookingStatus);
+    });
+
+    function getSelectedBookingTimes() {
+      const startText = document.getElementById("startTimeValue").textContent;
+      const endText = document.getElementById("endTimeValue").textContent;
+
+      const start = startText.match(/(\d{2}):(\d{2})\s(AM|PM)/);
+      const end = endText.match(/(\d{2}):(\d{2})\s(AM|PM)/);
+
+      return {
+        startText,
+        endText,
+        start24: to24Hour(start[1], start[2], start[3]),
+        end24: to24Hour(end[1], end[2], end[3]),
+        startMinutes: toMinutes(start[1], start[2], start[3]),
+        endMinutes: toMinutes(end[1], end[2], end[3])
+      };
+    }
+
+    clearBookingButton.addEventListener("click", () => {
+      bookingForm.reset();
+      startDate.value = todayISO;
+      endDate.value = todayISO;
+      endDate.min = todayISO;
+      document.getElementById("startTimeValue").textContent = "09:00 AM";
+      document.getElementById("endTimeValue").textContent = "05:00 PM";
+      hideStatus(bookingStatus);
+    });
+
+    bookingForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideStatus(bookingStatus);
+
+      const name = bookingName.value.trim();
+      if (!name) {
+        showStatus(bookingStatus, "Please enter your name.", "error");
+        return;
       }
 
-      if (end <= start) {
-        return "The end date/time must be after the start date/time.";
+      if (!startDate.value || !endDate.value) {
+        showStatus(bookingStatus, "Please choose both dates.", "error");
+        return;
       }
 
-      return null;
-    }
+      const times = getSelectedBookingTimes();
 
-    function updateSummary() {
-      summaryName.textContent = nameInput.value.trim() || "—";
+      const startDateTime = new Date(`${startDate.value}T${times.start24}:00`);
+      const endDateTime = new Date(`${endDate.value}T${times.end24}:00`);
 
-      summaryStart.textContent =
-        startDateInput.value && startTimeInput.value
-          ? `${prettyDate(startDateInput.value)} at ${prettyTime(startTimeInput.value)}`
-          : "—";
+      if (endDateTime <= startDateTime) {
+        showStatus(bookingStatus, "The end date and time must be after the start date and time.", "error");
+        return;
+      }
 
-      summaryEnd.textContent =
-        endDateInput.value && endTimeInput.value
-          ? `${prettyDate(endDateInput.value)} at ${prettyTime(endTimeInput.value)}`
-          : "—";
+      bookButton.disabled = true;
+      bookButton.textContent = "Saving...";
 
-      summary.classList.add("show");
-    }
+      try {
+        const { error } = await db.from(BOOKING_TABLE).insert([{
+          Time: times.start24,
+          Date: startDate.value,
+          name,
+          end_date: endDate.value,
+          end_time: times.end24
+        }]);
 
-    function setButtonBusy(busy) {
-      bookButton.disabled = busy;
-      clearButton.disabled = busy;
-      bookButton.innerHTML = busy
-        ? "<span>Saving...</span>"
-        : '<span>Book now</span><span class="button-arrow">→</span>';
-    }
+        if (error) throw error;
 
-    function resetForm() {
-      form.reset();
-      startDateInput.value = todayISO;
-      endDateInput.value = todayISO;
-      endDateInput.min = todayISO;
-      hideStatus();
-      clearSummary();
-    }
+        showSuccess(
+          "booking",
+          name,
+          `${prettyDate(startDate.value)} • ${times.startText} — ${prettyDate(endDate.value)} • ${times.endText}`
+        );
 
-    function showBookingScreen() {
-      clearInterval(countdownTimer);
-      countdownTimer = null;
+        bookingForm.reset();
+        startDate.value = todayISO;
+        endDate.value = todayISO;
+        endDate.min = todayISO;
+        document.getElementById("startTimeValue").textContent = "09:00 AM";
+        document.getElementById("endTimeValue").textContent = "05:00 PM";
 
-      successScreen.classList.remove("show");
-      bookingScreen.classList.add("active");
+      } catch (error) {
+        console.error(error);
+        showStatus(
+          bookingStatus,
+          `Could not save the booking. ${error.message || "Please check Supabase."}`,
+          "error"
+        );
+      } finally {
+        bookButton.disabled = false;
+        bookButton.textContent = "Book now";
+      }
+    });
 
-      resetForm();
+    // ------------------------------------------------------------
+    // DRINK ORDERING
+    // ------------------------------------------------------------
+    const drinkForm = document.getElementById("drinkForm");
+    const drinkName = document.getElementById("drinkName");
+    const drinkStatus = document.getElementById("drinkStatus");
+    const orderButton = document.getElementById("orderButton");
+    const drinkOptions = document.querySelectorAll(".drink-option");
 
-      setTimeout(() => {
-        nameInput.focus();
-      }, 150);
-    }
+    let selectedDrink = "";
 
-    function showSuccessScreen() {
-      bookingScreen.classList.remove("active");
-      successScreen.classList.add("show");
+    drinkOptions.forEach((option) => {
+      option.addEventListener("click", () => {
+        drinkOptions.forEach((x) => x.classList.remove("selected"));
+        option.classList.add("selected");
+        selectedDrink = option.dataset.drink;
+        hideStatus(drinkStatus);
+      });
+    });
 
+    drinkForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideStatus(drinkStatus);
+
+      const person = drinkName.value.trim();
+
+      if (!person) {
+        showStatus(drinkStatus, "Please enter your name.", "error");
+        return;
+      }
+
+      if (!selectedDrink) {
+        showStatus(drinkStatus, "Please choose a drink.", "error");
+        return;
+      }
+
+      orderButton.disabled = true;
+      orderButton.textContent = "Sending...";
+
+      try {
+        const { error } = await db.from(DRINKS_TABLE).insert([{
+          drink: selectedDrink,
+          person
+        }]);
+
+        if (error) throw error;
+
+        showSuccess(
+          "order",
+          person,
+          selectedDrink
+        );
+
+        drinkForm.reset();
+        drinkOptions.forEach((x) => x.classList.remove("selected"));
+        selectedDrink = "";
+
+      } catch (error) {
+        console.error(error);
+        showStatus(
+          drinkStatus,
+          `Could not save the order. ${error.message || "Please check Supabase."}`,
+          "error"
+        );
+      } finally {
+        orderButton.disabled = false;
+        orderButton.textContent = "Place order";
+      }
+    });
+
+    // ------------------------------------------------------------
+    // SUCCESS COUNTDOWN
+    // ------------------------------------------------------------
+    let countdownTimer = null;
+
+    function startSuccessCountdown() {
       let remaining = 10;
-      countdownEl.textContent = remaining;
+      const countdown = document.getElementById("countdown");
+      const progressBar = document.getElementById("progressBar");
+
+      countdown.textContent = remaining;
       progressBar.style.transition = "none";
       progressBar.style.transform = "scaleX(1)";
-
-      // Force a layout so the progress animation starts cleanly.
-      progressBar.offsetHeight;
+      void progressBar.offsetHeight;
       progressBar.style.transition = "transform 10s linear";
       progressBar.style.transform = "scaleX(0)";
 
@@ -891,124 +1266,30 @@
 
       countdownTimer = setInterval(() => {
         remaining -= 1;
-        countdownEl.textContent = remaining;
+        countdown.textContent = remaining;
 
         if (remaining <= 0) {
           clearInterval(countdownTimer);
           countdownTimer = null;
-          showBookingScreen();
+          returnHome();
         }
       }, 1000);
     }
 
-    // ------------------------------------------------------------
-    // DEFAULTS
-    // ------------------------------------------------------------
-    const today = new Date();
-    const todayISO = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, "0"),
-      String(today.getDate()).padStart(2, "0")
-    ].join("-");
+    function returnHome() {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
 
-    startDateInput.min = todayISO;
-    endDateInput.min = todayISO;
-    startDateInput.value = todayISO;
-    endDateInput.value = todayISO;
+      successView.classList.remove("active");
+      bottomNav.style.display = "grid";
+      showView("booking");
+    }
 
-    // ------------------------------------------------------------
-    // DATE RELATIONSHIP
-    // ------------------------------------------------------------
-    startDateInput.addEventListener("change", () => {
-      endDateInput.min = startDateInput.value;
+    document.getElementById("successHomeButton").addEventListener("click", returnHome);
 
-      if (endDateInput.value && endDateInput.value < startDateInput.value) {
-        endDateInput.value = startDateInput.value;
-      }
-
-      hideStatus();
-      updateSummary();
-    });
-
-    [
-      nameInput,
-      startTimeInput,
-      endDateInput,
-      endTimeInput
-    ].forEach((input) => {
-      input.addEventListener("input", () => {
-        hideStatus();
-        updateSummary();
-      });
-    });
-
-    // ------------------------------------------------------------
-    // SUBMIT / INSERT
-    // ------------------------------------------------------------
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      hideStatus();
-
-      const validationError = validateBooking();
-      if (validationError) {
-        showStatus(validationError, "error");
-        return;
-      }
-
-      setButtonBusy(true);
-
-      const booking = {
-        Time: startTimeInput.value,
-        Date: startDateInput.value,
-        name: nameInput.value.trim(),
-        end_date: endDateInput.value,
-        end_time: endTimeInput.value
-      };
-
-      try {
-        const { error } = await db
-          .from(TABLE_NAME)
-          .insert([booking]);
-
-        if (error) {
-          console.error("Supabase insert error:", error);
-          throw error;
-        }
-
-        // Fill the success screen before clearing the form.
-        successName.textContent = booking.name;
-        successBooking.textContent =
-          `${prettyDate(booking.Date)} • ${prettyTime(booking.Time)} — ${prettyDate(booking.end_date)} • ${prettyTime(booking.end_time)}`;
-
-        form.reset();
-        showSuccessScreen();
-
-      } catch (error) {
-        console.error(error);
-
-        let message = "The booking could not be saved.";
-
-        if (error?.message) {
-          message += ` ${error.message}`;
-        }
-
-        message += " Check your Supabase table and INSERT policy.";
-
-        showStatus(message, "error");
-      } finally {
-        setButtonBusy(false);
-      }
-    });
-
-    clearButton.addEventListener("click", () => {
-      resetForm();
-      nameInput.focus();
-    });
-
-    bookAnotherButton.addEventListener("click", showBookingScreen);
-
-    window.addEventListener("load", () => {
-      nameInput.focus();
+    // Keyboard escape closes the time picker.
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closePicker();
     });
   </script>
 </body>
