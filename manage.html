@@ -11,7 +11,6 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
-    /* Hide scrollbar for a cleaner look while keeping functionality */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -59,7 +58,7 @@
     </div>
 
     <!-- Status Message -->
-    <div id="status-msg" class="hidden mb-6 p-4 rounded-lg text-sm font-medium border"></div>
+    <div id="status-msg" class="hidden mb-6 p-4 rounded-lg text-sm font-medium border transition-all"></div>
 
     <!-- Bookings View -->
     <section id="section-bookings" class="space-y-4">
@@ -72,10 +71,11 @@
                 <th class="py-3 px-6">Guest Name</th>
                 <th class="py-3 px-6">Check In</th>
                 <th class="py-3 px-6">Check Out</th>
+                <th class="py-3 px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody id="bookings-tbody" class="divide-y divide-gray-100 text-sm">
-              <tr><td colspan="4" class="py-12 text-center text-gray-400">Loading bookings...</td></tr>
+              <tr><td colspan="5" class="py-12 text-center text-gray-400">Loading bookings...</td></tr>
             </tbody>
           </table>
         </div>
@@ -93,10 +93,11 @@
                 <th class="py-3 px-6">Ordered By</th>
                 <th class="py-3 px-6">Time Ordered</th>
                 <th class="py-3 px-6">Order ID</th>
+                <th class="py-3 px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody id="drinks-tbody" class="divide-y divide-gray-100 text-sm">
-              <tr><td colspan="4" class="py-12 text-center text-gray-400">Loading drinks...</td></tr>
+              <tr><td colspan="5" class="py-12 text-center text-gray-400">Loading drinks...</td></tr>
             </tbody>
           </table>
         </div>
@@ -111,8 +112,7 @@
     const SUPABASE_KEY = 'sb_publishable_64EzKYsi__8oT4h4EJHP7A_iLnkJlla';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Parse Date and Time safely into a real Javascript Date object
-    // Handles formats: YYYY-MM-DD, DD/MM/YYYY, D/M/YYYY and times like 8:00, 8:0
+    // --- Date Parsing Helpers ---
     function parseDateTime(dateStr, timeStr) {
       if (!dateStr) return null;
       let year, month, day;
@@ -121,9 +121,9 @@
       if (cleanDate.includes('/')) {
         const parts = cleanDate.split('/');
         day = parseInt(parts[0], 10);
-        month = parseInt(parts[1], 10) - 1; // JS Months are 0-indexed
+        month = parseInt(parts[1], 10) - 1;
         year = parseInt(parts[2], 10);
-        if (year < 100) year += 2000; // Just in case year is '26' instead of '2026'
+        if (year < 100) year += 2000;
       } else if (cleanDate.includes('-')) {
         const parts = cleanDate.split('-');
         year = parseInt(parts[0], 10);
@@ -139,14 +139,13 @@
         const tParts = cleanTime.split(':');
         hours = parseInt(tParts[0], 10) || 0;
         let mStr = tParts[1] || '00';
-        if (mStr.length === 1) mStr += '0'; // Fixes "8:0" to "8:00"
+        if (mStr.length === 1) mStr += '0';
         minutes = parseInt(mStr, 10) || 0;
       }
 
       return new Date(year, month, day, hours, minutes);
     }
 
-    // Format JS Date to strict DD/MM/YYYY
     function formatToDDMMYYYY(dateObj) {
       if (!dateObj || isNaN(dateObj.getTime())) return 'N/A';
       const d = String(dateObj.getDate()).padStart(2, '0');
@@ -155,7 +154,6 @@
       return `${d}/${m}/${y}`;
     }
 
-    // Format JS Date to HH:MM
     function formatToHHMM(dateObj) {
       if (!dateObj || isNaN(dateObj.getTime())) return '00:00';
       const h = String(dateObj.getHours()).padStart(2, '0');
@@ -163,7 +161,6 @@
       return `${h}:${m}`;
     }
 
-    // Format Drinks Timestamp
     function formatTimestamp(isoString) {
       if (!isoString) return 'N/A';
       const date = new Date(isoString);
@@ -179,12 +176,42 @@
       }).format(date);
     }
 
-    // Fetch and Display Data
-    async function fetchAllData() {
-      showStatus('Syncing latest data...', 'info');
-
+    // --- Delete Operations ---
+    async function deleteBooking(id) {
+      if (!confirm(`Are you sure you want to completely delete booking #${id}? This cannot be undone.`)) return;
+      
+      showStatus('Deleting booking...', 'info');
       try {
-        // Fetch Bookings
+        const { error } = await supabaseClient.from('Bookings').delete().eq('id', id);
+        if (error) throw error;
+        
+        showStatus('Booking deleted successfully!', 'success');
+        await fetchAllData();
+      } catch (err) {
+        console.error('Delete Error:', err);
+        showStatus('Failed to delete booking. See console.', 'error');
+      }
+    }
+
+    async function deleteDrink(id) {
+      if (!confirm(`Are you sure you want to completely delete drink order #${id}? This cannot be undone.`)) return;
+      
+      showStatus('Deleting drink order...', 'info');
+      try {
+        const { error } = await supabaseClient.from('Drinks').delete().eq('id', id);
+        if (error) throw error;
+        
+        showStatus('Drink order deleted successfully!', 'success');
+        await fetchAllData();
+      } catch (err) {
+        console.error('Delete Error:', err);
+        showStatus('Failed to delete drink order. See console.', 'error');
+      }
+    }
+
+    // --- Fetch and Display Data ---
+    async function fetchAllData() {
+      try {
         const { data: bookings, error: bookingsErr } = await supabaseClient
           .from('Bookings')
           .select('*')
@@ -192,7 +219,6 @@
 
         if (bookingsErr) throw bookingsErr;
 
-        // Fetch Drinks
         const { data: drinks, error: drinksErr } = await supabaseClient
           .from('Drinks')
           .select('*')
@@ -203,28 +229,27 @@
         renderBookings(bookings || []);
         renderDrinks(drinks || []);
         
-        hideStatus();
       } catch (err) {
         console.error('Data Fetch Error:', err);
-        showStatus('Failed to load data from Supabase. Check console for details.', 'error');
+        showStatus('Failed to load data from Supabase.', 'error');
       }
     }
 
     function renderBookings(allBookings) {
       const now = new Date();
       
-      // Filter out bookings where check-out time is in the past (hides them)
+      // Auto-hide old bookings
       const activeBookings = allBookings.filter(item => {
         const checkoutObj = parseDateTime(item.end_date, item.end_time);
-        if (!checkoutObj) return true; // Keep if we can't parse it
-        return checkoutObj >= now; // Only keep if checkout is in the future
+        if (!checkoutObj) return true;
+        return checkoutObj >= now;
       });
 
       document.getElementById('bookings-count').textContent = activeBookings.length;
       const tbody = document.getElementById('bookings-tbody');
 
       if (activeBookings.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="py-12 text-center text-gray-500">No active bookings found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-500">No active bookings found.</td></tr>`;
         return;
       }
 
@@ -232,27 +257,28 @@
         const checkInObj = parseDateTime(item.Date, item.Time);
         const checkOutObj = parseDateTime(item.end_date, item.end_time);
 
-        const checkInDateStr = formatToDDMMYYYY(checkInObj);
-        const checkInTimeStr = formatToHHMM(checkInObj);
-        
-        const checkOutDateStr = formatToDDMMYYYY(checkOutObj);
-        const checkOutTimeStr = formatToHHMM(checkOutObj);
-
         return `
-          <tr class="hover:bg-gray-50/80 transition-colors">
+          <tr class="hover:bg-gray-50/80 transition-colors group">
             <td class="py-4 px-6 font-mono text-xs text-gray-400">#${item.id}</td>
             <td class="py-4 px-6 font-medium text-gray-900 capitalize">${item.name || 'Unnamed'}</td>
             <td class="py-4 px-6">
               <div class="flex flex-col">
-                <span class="text-sm text-gray-800">${checkInDateStr}</span>
-                <span class="text-xs text-gray-500">${checkInTimeStr}</span>
+                <span class="text-sm text-gray-800">${formatToDDMMYYYY(checkInObj)}</span>
+                <span class="text-xs text-gray-500">${formatToHHMM(checkInObj)}</span>
               </div>
             </td>
             <td class="py-4 px-6">
               <div class="flex flex-col">
-                <span class="text-sm text-gray-800">${checkOutDateStr}</span>
-                <span class="text-xs text-gray-500">${checkOutTimeStr}</span>
+                <span class="text-sm text-gray-800">${formatToDDMMYYYY(checkOutObj)}</span>
+                <span class="text-xs text-gray-500">${formatToHHMM(checkOutObj)}</span>
               </div>
+            </td>
+            <td class="py-4 px-6 text-right">
+              <button onclick="deleteBooking(${item.id})" title="Delete Booking" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
             </td>
           </tr>
         `;
@@ -264,33 +290,53 @@
       const tbody = document.getElementById('drinks-tbody');
 
       if (drinks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="py-12 text-center text-gray-500">No drinks logged yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-gray-500">No drinks logged yet.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = drinks.map(item => {
-        const formattedDrink = (item.drink || 'Unknown').trim();
-        const formattedTime = formatTimestamp(item.created_at);
-
         return `
-          <tr class="hover:bg-gray-50/80 transition-colors">
+          <tr class="hover:bg-gray-50/80 transition-colors group">
             <td class="py-4 px-6">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm">
-                  🍹
-                </div>
-                <span class="font-medium text-gray-900">${formattedDrink}</span>
+                <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm">🍹</div>
+                <span class="font-medium text-gray-900">${(item.drink || 'Unknown').trim()}</span>
               </div>
             </td>
             <td class="py-4 px-6 text-gray-700 capitalize">${item.person || 'Unknown'}</td>
-            <td class="py-4 px-6 text-gray-500 text-sm">${formattedTime}</td>
+            <td class="py-4 px-6 text-gray-500 text-sm">${formatTimestamp(item.created_at)}</td>
             <td class="py-4 px-6 font-mono text-xs text-gray-400">#${item.id}</td>
+            <td class="py-4 px-6 text-right">
+              <button onclick="deleteDrink(${item.id})" title="Delete Drink Order" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </td>
           </tr>
         `;
       }).join('');
     }
 
-    // UI Helpers
+    // --- UI Helpers ---
+    let statusTimeout;
+    function showStatus(msg, type) {
+      clearTimeout(statusTimeout);
+      const el = document.getElementById('status-msg');
+      el.classList.remove('hidden', 'bg-red-50', 'border-red-200', 'text-red-700', 'bg-blue-50', 'border-blue-200', 'text-blue-700', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-700');
+      
+      if (type === 'error') el.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
+      else if (type === 'success') el.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-700');
+      else el.classList.add('bg-blue-50', 'border-blue-200', 'text-blue-700');
+      
+      el.textContent = msg;
+
+      // Auto hide success or error messages after 3 seconds
+      if (type === 'success' || type === 'error') {
+        statusTimeout = setTimeout(() => el.classList.add('hidden'), 3000);
+      }
+    }
+
     function switchTab(tab) {
       const bookingsSec = document.getElementById('section-bookings');
       const drinksSec = document.getElementById('section-drinks');
@@ -300,31 +346,14 @@
       if (tab === 'bookings') {
         bookingsSec.classList.remove('hidden');
         drinksSec.classList.add('hidden');
-        
         bookingsBtn.className = "pb-3 text-sm font-semibold border-b-2 border-blue-600 text-blue-600 transition-colors flex items-center gap-2";
         drinksBtn.className = "pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-2";
       } else {
         bookingsSec.classList.add('hidden');
         drinksSec.classList.remove('hidden');
-        
         drinksBtn.className = "pb-3 text-sm font-semibold border-b-2 border-blue-600 text-blue-600 transition-colors flex items-center gap-2";
         bookingsBtn.className = "pb-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-2";
       }
-    }
-
-    function showStatus(msg, type) {
-      const el = document.getElementById('status-msg');
-      el.classList.remove('hidden', 'bg-red-50', 'border-red-200', 'text-red-700', 'bg-blue-50', 'border-blue-200', 'text-blue-700');
-      if (type === 'error') {
-        el.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
-      } else {
-        el.classList.add('bg-blue-50', 'border-blue-200', 'text-blue-700');
-      }
-      el.textContent = msg;
-    }
-
-    function hideStatus() {
-      document.getElementById('status-msg').classList.add('hidden');
     }
 
     // Initial Load
