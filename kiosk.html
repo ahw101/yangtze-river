@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Kiosk</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #162033;
+      --muted: #69758a;
+      --line: #dfe5ee;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --success: #15803d;
+      --shadow: 0 24px 70px rgba(18, 36, 68, 0.12);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.08), transparent 35%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .kiosk {
+      width: min(1100px, 100%);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar {
+      padding: 30px 34px 24px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(255,255,255,.97), rgba(246,249,255,.96));
+    }
+
+    .brand {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-size: 27px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), #38bdf8);
+      box-shadow: 0 12px 25px rgba(37, 99, 235, .25);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -1.1px;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .content {
+      padding: 34px;
+    }
+
+    .step-label {
+      margin-bottom: 12px;
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--primary);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: 750;
+      font-size: 15px;
+    }
+
+    input {
+      width: 100%;
+      height: 58px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 0 16px;
+      outline: none;
+      background: #fbfcfe;
+      color: var(--text);
+      font: inherit;
+      font-size: 17px;
+      transition: .18s ease;
+    }
+
+    input:focus {
+      background: white;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .11);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      height: 58px;
+      padding: 0 24px;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary {
+      flex: 1;
+      color: white;
+      background: linear-gradient(135deg, var(--primary), #3b82f6);
+      box-shadow: 0 12px 25px rgba(37,99,235,.22);
+    }
+
+    .secondary {
+      background: #eef2f7;
+      color: #273247;
+    }
+
+    button:disabled {
+      opacity: .65;
+      cursor: wait;
+      transform: none;
+    }
+
+    .status {
+      display: none;
+      margin-top: 20px;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .status.show { display: block; }
+    .status.success {
+      color: var(--success);
+      background: #ecfdf3;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status.error {
+      color: var(--danger);
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    .summary {
+      display: none;
+      margin-top: 25px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 20px;
+    }
+
+    .summary.show { display: block; }
+
+    .summary-title {
+      font-weight: 850;
+      margin-bottom: 12px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 8px 0;
+      border-bottom: 1px solid #e8edf3;
+    }
+
+    .summary-row:last-child { border-bottom: 0; }
+
+    .summary-row span:first-child { color: var(--muted); }
+    .summary-row span:last-child { font-weight: 750; text-align: right; }
+
+    .footer {
+      padding: 18px 34px 26px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 10px; }
+      .topbar, .content { padding: 24px 20px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .actions { flex-direction: column-reverse; }
+      .summary-row { flex-direction: column; gap: 2px; }
+      .summary-row span:last-child { text-align: left; }
+      .footer { padding: 16px 20px 22px; }
+    }
+
+    @media (min-width: 1100px) {
+      body { padding: 40px; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="kiosk">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">B</div>
+        <div>
+          <h1>Book a Slot</h1>
+          <p class="subtitle">Enter the details below to make your booking.</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="step-label">Booking details</div>
+
+      <form id="bookingForm" autocomplete="off">
+        <div class="form-grid">
+
+          <div class="field full">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" placeholder="Enter your name" maxlength="120" required />
+          </div>
+
+          <div class="field">
+            <label for="startDate">Start date</label>
+            <input id="startDate" name="startDate" type="date" required />
+            <div class="hint">The date your booking starts.</div>
+          </div>
+
+          <div class="field">
+            <label for="startTime">Start time</label>
+            <input id="startTime" name="startTime" type="time" required />
+            <div class="hint">The time your booking starts.</div>
+          </div>
+
+          <div class="field">
+            <label for="endDate">End date</label>
+            <input id="endDate" name="endDate" type="date" required />
+            <div class="hint">The date your booking ends.</div>
+          </div>
+
+          <div class="field">
+            <label for="endTime">End time</label>
+            <input id="endTime" name="endTime" type="time" required />
+            <div class="hint">The time your booking ends.</div>
+          </div>
+
+        </div>
+
+        <div id="status" class="status" role="alert"></div>
+
+        <div id="summary" class="summary">
+          <div class="summary-title">Booking summary</div>
+          <div class="summary-row">
+            <span>Name</span>
+            <span id="summaryName">—</span>
+          </div>
+          <div class="summary-row">
+            <span>Starts</span>
+            <span id="summaryStart">—</span>
+          </div>
+          <div class="summary-row">
+            <span>Ends</span>
+            <span id="summaryEnd">—</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="secondary" id="clearButton">Clear</button>
+          <button type="submit" class="primary" id="bookButton">Book now</button>
+        </div>
+      </form>
+    </section>
+
+    <footer class="footer">
+      Booking Kiosk
+    </footer>
+  </main>
+
+  <script>
+    // ------------------------------------------------------------
+    // SUPABASE CONFIG
+    // ------------------------------------------------------------
+    const SUPABASE_URL = "https://cjnccuhndzxprjyuawjr.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_64EzKYsi__8oT4h4EJHP7A_iLnkJlla";
+
+    // Change this ONLY if your Supabase table has a different name.
+    const TABLE_NAME = "bookings";
+
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ------------------------------------------------------------
+    // ELEMENTS
+    // ------------------------------------------------------------
+    const form = document.getElementById("bookingForm");
+    const nameInput = document.getElementById("name");
+    const startDateInput = document.getElementById("startDate");
+    const startTimeInput = document.getElementById("startTime");
+    const endDateInput = document.getElementById("endDate");
+    const endTimeInput = document.getElementById("endTime");
+
+    const bookButton = document.getElementById("bookButton");
+    const clearButton = document.getElementById("clearButton");
+    const statusBox = document.getElementById("status");
+    const summary = document.getElementById("summary");
+
+    const summaryName = document.getElementById("summaryName");
+    const summaryStart = document.getElementById("summaryStart");
+    const summaryEnd = document.getElementById("summaryEnd");
+
+    // ------------------------------------------------------------
+    // HELPERS
+    // ------------------------------------------------------------
+    function showStatus(message, type) {
+      statusBox.textContent = message;
+      statusBox.className = "status show " + type;
+    }
+
+    function hideStatus() {
+      statusBox.textContent = "";
+      statusBox.className = "status";
+    }
+
+    function clearSummary() {
+      summary.classList.remove("show");
+      summaryName.textContent = "—";
+      summaryStart.textContent = "—";
+      summaryEnd.textContent = "—";
+    }
+
+    function toDateTime(date, time) {
+      return new Date(`${date}T${time}:00`);
+    }
+
+    function prettyDate(value) {
+      if (!value) return "";
+      const d = new Date(`${value}T00:00:00`);
+      return d.toLocaleDateString("en-GB", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    function prettyTime(value) {
+      if (!value) return "";
+      const [hours, minutes] = value.split(":");
+      const d = new Date();
+      d.setHours(Number(hours), Number(minutes), 0, 0);
+
+      return d.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function validateBooking() {
+      const start = toDateTime(startDateInput.value, startTimeInput.value);
+      const end = toDateTime(endDateInput.value, endTimeInput.value);
+
+      if (!nameInput.value.trim()) {
+        return "Please enter your name.";
+      }
+
+      if (!startDateInput.value || !startTimeInput.value ||
+          !endDateInput.value || !endTimeInput.value) {
+        return "Please complete all of the date and time fields.";
+      }
+
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        return "Please enter valid dates and times.";
+      }
+
+      if (end <= start) {
+        return "The end date/time must be after the start date/time.";
+      }
+
+      return null;
+    }
+
+    function updateSummary() {
+      summaryName.textContent = nameInput.value.trim() || "—";
+
+      if (startDateInput.value && startTimeInput.value) {
+        summaryStart.textContent =
+          `${prettyDate(startDateInput.value)} at ${prettyTime(startTimeInput.value)}`;
+      } else {
+        summaryStart.textContent = "—";
+      }
+
+      if (endDateInput.value && endTimeInput.value) {
+        summaryEnd.textContent =
+          `${prettyDate(endDateInput.value)} at ${prettyTime(endTimeInput.value)}`;
+      } else {
+        summaryEnd.textContent = "—";
+      }
+
+      summary.classList.add("show");
+    }
+
+    function setButtonBusy(busy) {
+      bookButton.disabled = busy;
+      clearButton.disabled = busy;
+      bookButton.textContent = busy ? "Booking..." : "Book now";
+    }
+
+    // ------------------------------------------------------------
+    // DEFAULTS
+    // ------------------------------------------------------------
+    const today = new Date();
+    const todayISO = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0")
+    ].join("-");
+
+    startDateInput.min = todayISO;
+    endDateInput.min = todayISO;
+    startDateInput.value = todayISO;
+    endDateInput.value = todayISO;
+
+    // ------------------------------------------------------------
+    // KEEP END DATE FROM BEING BEFORE START DATE
+    // ------------------------------------------------------------
+    startDateInput.addEventListener("change", () => {
+      endDateInput.min = startDateInput.value;
+
+      if (endDateInput.value && endDateInput.value < startDateInput.value) {
+        endDateInput.value = startDateInput.value;
+      }
+
+      updateSummary();
+    });
+
+    [
+      nameInput,
+      startDateInput,
+      startTimeInput,
+      endDateInput,
+      endTimeInput
+    ].forEach((input) => {
+      input.addEventListener("input", () => {
+        hideStatus();
+        updateSummary();
+      });
+    });
+
+    // ------------------------------------------------------------
+    // SUBMIT / INSERT
+    // ------------------------------------------------------------
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideStatus();
+
+      const validationError = validateBooking();
+      if (validationError) {
+        showStatus(validationError, "error");
+        return;
+      }
+
+      updateSummary();
+      setButtonBusy(true);
+
+      try {
+        /*
+          These keys match the columns shown in your screenshot:
+
+          Time      -> start time
+          Date      -> start date
+          name      -> person's name
+          end_date  -> end date
+          end_time  -> end time
+        */
+        const booking = {
+          Time: startTimeInput.value,
+          Date: startDateInput.value,
+          name: nameInput.value.trim(),
+          end_date: endDateInput.value,
+          end_time: endTimeInput.value
+        };
+
+        const { error } = await db
+          .from(TABLE_NAME)
+          .insert([booking]);
+
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
+
+        showStatus(
+          "Booking created successfully. Your booking has been saved.",
+          "success"
+        );
+
+        // Keep the summary visible, but reset the editable fields.
+        form.reset();
+        startDateInput.value = todayISO;
+        endDateInput.value = todayISO;
+        endDateInput.min = todayISO;
+        clearSummary();
+
+        // Show a clean success state for the kiosk.
+        showStatus(
+          "Booking created successfully. Your booking has been saved.",
+          "success"
+        );
+
+      } catch (error) {
+        console.error(error);
+
+        let message = "The booking could not be saved.";
+
+        if (error?.message) {
+          message += ` ${error.message}`;
+        }
+
+        message +=
+          " Check that the table name, column names, and Supabase INSERT policy are correct.";
+
+        showStatus(message, "error");
+      } finally {
+        setButtonBusy(false);
+      }
+    });
+
+    clearButton.addEventListener("click", () => {
+      form.reset();
+      startDateInput.value = todayISO;
+      endDateInput.value = todayISO;
+      endDateInput.min = todayISO;
+      hideStatus();
+      clearSummary();
+      nameInput.focus();
+    });
+
+    // Start with the cursor in the first field.
+    window.addEventListener("load", () => nameInput.focus());
+  </script>
+</body>
+</html>
